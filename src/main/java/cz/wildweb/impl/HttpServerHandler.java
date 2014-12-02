@@ -8,6 +8,8 @@ import io.netty.handler.codec.http.*;
 import io.netty.util.CharsetUtil;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+
 public class HttpServerHandler extends SimpleChannelInboundHandler<Object> {
 
     private final HttpRouter router;
@@ -26,10 +28,20 @@ public class HttpServerHandler extends SimpleChannelInboundHandler<Object> {
             this.response = new HttpResponseImpl(ctx);
             LoggerFactory.getLogger(getClass()).info("Request: {} to {}", this.request.method(), this.request.uri());
         }
+
         if(msg instanceof HttpContent) {
             this.request.content(((HttpContent) msg).content().toString(CharsetUtil.UTF_8));
         }
+
         if(msg instanceof LastHttpContent) {
+            if(this.request.method().equals("GET")) {
+                File path = new File("public", this.request.uri());
+                if(path.exists() && path.isFile()) {
+                    LoggerFactory.getLogger(getClass()).info("Serving static file: {}", path.getAbsolutePath());
+                    this.response.close(path);
+                    return;
+                }
+            }
             HttpRouterMatch match = this.router.match(this.request.method(), this.request.uri());
             if(match != null && match.handler() != null) {
                 this.request.attributes(match.parameters());
