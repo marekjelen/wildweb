@@ -4,22 +4,22 @@ import java.io.File;
 
 public interface HttpResponse {
 
-    public void status(int status);
+    void status(int status);
 
-    public void header(String name, String value);
+    void header(String name, String value);
 
-    public void send();
+    void send();
 
-    public void write(Object content);
+    void write(Object content);
 
-    public void close();
+    void close();
 
-    public void close(File file);
+    void close(File file);
 
-    public void close(Object content);
+    void close(Object content);
 
-    public void put(String name, Object value);
+    void put(String name, Object value);
 
-    public void render(String file);
+    void render(String file);
 
 }

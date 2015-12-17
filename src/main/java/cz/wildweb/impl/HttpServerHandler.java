@@ -1,5 +1,7 @@
 package cz.wildweb.impl;
 
+import cz.wildweb.api.HttpHandler;
+import cz.wildweb.impl.router.HttpRouter;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -42,13 +44,13 @@ public class HttpServerHandler extends SimpleChannelInboundHandler<Object> {
                     return;
                 }
             }
-            HttpRouterMatch match = this.router.match(this.request.method(), this.request.uri());
-            if(match != null && match.handler() != null) {
-                this.request.attributes(match.parameters());
-                match.handler().handle(this.request, this.response);
+            HttpHandler handler = this.router.match(this.request);
+
+            if(handler != null) {
+                handler.handle(this.request, this.response);
             } else {
                 this.response.status(404);
-                this.response.close();
+                this.response.close("Not found");
             }
         }
     }

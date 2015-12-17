@@ -1,18 +1,21 @@
 package cz.wildweb.api;
 
+import java.util.List;
 import java.util.Set;
 
 public interface HttpRequest {
 
-    public String method();
-    public String uri();
+    String method();
+    String uri();
 
-    public String header(String name);
-    public Set<String> headers();
+    String header(String name);
+    Set<String> headers();
 
-    public String attribute(String name);
-    public Set<String> attributes();
+    String attribute(String name);
+    Set<String> attributes();
 
-    public String content();
+    List<String> splat();
+
+    String content();
 
 }

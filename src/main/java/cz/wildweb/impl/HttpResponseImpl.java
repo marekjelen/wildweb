@@ -134,6 +134,7 @@ public class HttpResponseImpl implements HttpResponse {
     }
 
     private String stringize(Object content) {
+        if(content == null) return "";
         if(content instanceof String) {
             return (String) content;
         } else {

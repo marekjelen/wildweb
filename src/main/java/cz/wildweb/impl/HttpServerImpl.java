@@ -2,6 +2,7 @@ package cz.wildweb.impl;
 
 import cz.wildweb.api.HttpHandler;
 import cz.wildweb.api.HttpServer;
+import cz.wildweb.impl.router.HttpRouter;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
@@ -62,11 +63,6 @@ public class HttpServerImpl implements HttpServer {
     @Override
     public void register(String method, String url, HttpHandler handler) {
         this.router.register(method, url, handler);
-    }
-
-    @Override
-    public void unregister(HttpHandler handler) {
-        this.router.unregister(handler);
     }
 
     @Override

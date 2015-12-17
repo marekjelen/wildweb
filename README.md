@@ -19,6 +19,18 @@ public class Main {
         server.register("/", (request, response) -> {
             response.close("Hello");
         });
+
+        server.register("/echo/:content", (request, response) -> {
+            response.close(request.attribute("content"));
+        });
+
+        server.register("/print/*", (request, response) -> {
+            response.close(request.splat());
+        });
+
+        server.register("/print/*/inside", (request, response) -> {
+            response.close("Inside: " + request.splat());
+        });
     }
 
 }
