@@ -1,6 +1,8 @@
 package cz.wildweb.impl;
 
 import cz.wildweb.api.HttpRequest;
+import cz.wildweb.api.WebSocket;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.DefaultHttpRequest;
 
 import java.util.*;
@@ -8,12 +10,15 @@ import java.util.*;
 public class HttpRequestImpl implements HttpRequest {
 
     private final DefaultHttpRequest request;
+    private final ChannelHandlerContext context;
     private final StringBuilder buffer = new StringBuilder();
 
     private Map<String, String> attributes = new HashMap<>();
     private List<String> splat;
+    private WebSocketImpl websocket;
 
-    public HttpRequestImpl(DefaultHttpRequest request) {
+    public HttpRequestImpl(DefaultHttpRequest request, ChannelHandlerContext ctx) {
+        this.context = ctx;
         this.request = request;
     }
 
@@ -25,6 +30,14 @@ public class HttpRequestImpl implements HttpRequest {
     @Override
     public String uri() {
         return this.request.uri();
+    }
+
+    @Override
+    public WebSocket websocket() {
+        if(this.websocket == null) {
+            this.websocket = new WebSocketImpl(this.context, this);
+        }
+        return this.websocket;
     }
 
     @Override
@@ -67,6 +80,14 @@ public class HttpRequestImpl implements HttpRequest {
 
     public void splat(String[] splat) {
         this.splat = Arrays.asList(splat);
+    }
+
+    public DefaultHttpRequest request() {
+        return request;
+    }
+
+    public WebSocketImpl websocketHandler() {
+        return websocket;
     }
 
 }

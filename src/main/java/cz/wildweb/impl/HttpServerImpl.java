@@ -11,6 +11,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
+import io.netty.handler.logging.LoggingHandler;
 import org.slf4j.LoggerFactory;
 
 public class HttpServerImpl implements HttpServer {
@@ -34,6 +35,7 @@ public class HttpServerImpl implements HttpServer {
             @Override
             protected void initChannel(SocketChannel ch) throws Exception {
                 ChannelPipeline p = ch.pipeline();
+                p.addLast(new LoggingHandler());
                 p.addLast(new HttpRequestDecoder());
                 p.addLast(new HttpResponseEncoder());
                 p.addLast(new HttpServerHandler(router));

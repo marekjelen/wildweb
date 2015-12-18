@@ -1,6 +1,7 @@
 package cz.wildweb.example;
 
 import cz.wildweb.api.HttpServer;
+import cz.wildweb.api.WebSocket;
 import cz.wildweb.impl.HttpServerImpl;
 
 public class Main {
@@ -25,6 +26,22 @@ public class Main {
             response.close("Inside: " + request.splat());
         });
 
+        server.register("/websocket", ((request, response) -> {
+            if(request.websocket().valid()) {
+                WebSocket socket = request.websocket();
+                socket.opened(() -> {
+                });
+                socket.message(message -> {
+                    socket.write(message);
+                });
+                socket.closed(() -> {
+                });
+
+                socket.accept();
+            } else {
+                response.render("websocket.ftl");
+            }
+        }));
     }
 
 }

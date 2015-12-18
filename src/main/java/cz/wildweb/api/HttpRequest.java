@@ -8,6 +8,8 @@ public interface HttpRequest {
     String method();
     String uri();
 
+    WebSocket websocket();
+
     String header(String name);
     Set<String> headers();
 
