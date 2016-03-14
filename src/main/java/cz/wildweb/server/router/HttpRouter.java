@@ -1,7 +1,7 @@
-package cz.wildweb.impl.router;
+package cz.wildweb.server.router;
 
 import cz.wildweb.api.HttpHandler;
-import cz.wildweb.impl.HttpRequestImpl;
+import cz.wildweb.server.HttpRequestImpl;
 
 import java.util.*;
 

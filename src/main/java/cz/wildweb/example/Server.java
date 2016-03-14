@@ -2,9 +2,9 @@ package cz.wildweb.example;
 
 import cz.wildweb.api.HttpServer;
 import cz.wildweb.api.WebSocket;
-import cz.wildweb.impl.HttpServerImpl;
+import cz.wildweb.server.HttpServerImpl;
 
-public class Main {
+public class Server {
 
     public static void main(String[] args) {
         HttpServer server = new HttpServerImpl();

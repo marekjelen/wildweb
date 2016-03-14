@@ -1,4 +1,4 @@
-package cz.wildweb.impl;
+package cz.wildweb.server;
 
 import cz.wildweb.api.HttpRequest;
 import cz.wildweb.api.WebSocket;

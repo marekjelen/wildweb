@@ -1,4 +1,4 @@
-package cz.wildweb.impl.router;
+package cz.wildweb.server.router;
 
 import cz.wildweb.api.HttpHandler;
 

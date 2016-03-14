@@ -1,4 +1,4 @@
-package cz.wildweb.impl;
+package cz.wildweb.server;
 
 import cz.wildweb.api.HttpResponse;
 import freemarker.template.Configuration;
@@ -10,8 +10,6 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.DefaultFileRegion;
 import io.netty.handler.codec.http.*;
-import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import org.slf4j.LoggerFactory;
 
 import javax.activation.MimetypesFileTypeMap;
@@ -163,5 +161,6 @@ public class HttpResponseImpl implements HttpResponse {
             return content.toString();
         }
     }
+
 
 }

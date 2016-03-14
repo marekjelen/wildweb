@@ -1,7 +1,7 @@
-package cz.wildweb.impl;
+package cz.wildweb.server;
 
 import cz.wildweb.api.HttpHandler;
-import cz.wildweb.impl.router.HttpRouter;
+import cz.wildweb.server.router.HttpRouter;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -33,7 +33,7 @@ public class HttpServerHandler extends SimpleChannelInboundHandler<Object> {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        if(this.request.websocketHandler() != null && this.request.websocketHandler().active()) {
+        if(this.request != null && this.request.websocketHandler() != null && this.request.websocketHandler().active()) {
             this.request.websocketHandler().onClosed(null);
         }
     }

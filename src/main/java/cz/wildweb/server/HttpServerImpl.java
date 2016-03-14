@@ -1,9 +1,10 @@
-package cz.wildweb.impl;
+package cz.wildweb.server;
 
 import cz.wildweb.api.HttpHandler;
 import cz.wildweb.api.HttpServer;
-import cz.wildweb.impl.router.HttpRouter;
+import cz.wildweb.server.router.HttpRouter;
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -11,6 +12,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
+import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import org.slf4j.LoggerFactory;
 
@@ -21,6 +23,7 @@ public class HttpServerImpl implements HttpServer {
     private final ServerBootstrap bootstrap;
     private final HttpRouter router = new HttpRouter();
     private boolean started = false;
+    private Channel channel;
 
     public HttpServerImpl() {
         LoggerFactory.getLogger(getClass()).info("Setting up HTTP server");
@@ -35,7 +38,7 @@ public class HttpServerImpl implements HttpServer {
             @Override
             protected void initChannel(SocketChannel ch) throws Exception {
                 ChannelPipeline p = ch.pipeline();
-                p.addLast(new LoggingHandler());
+                p.addLast(new LoggingHandler(LogLevel.INFO));
                 p.addLast(new HttpRequestDecoder());
                 p.addLast(new HttpResponseEncoder());
                 p.addLast(new HttpServerHandler(router));
@@ -49,7 +52,7 @@ public class HttpServerImpl implements HttpServer {
         LoggerFactory.getLogger(getClass()).info("Starting HTTP server");
 
         try {
-            this.bootstrap.bind(address, port).sync();
+            this.channel = this.bootstrap.bind(address, port).sync().channel();
             this.started = true;
         } catch (InterruptedException e) {
             LoggerFactory.getLogger(getClass()).error("Problem starting HTTP server", e);
@@ -73,6 +76,11 @@ public class HttpServerImpl implements HttpServer {
         LoggerFactory.getLogger(getClass()).info("Stopping HTTP server");
         this.bossGroup.shutdownGracefully();
         this.workerGroup.shutdownGracefully();
+        try {
+            this.channel.close().sync();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         this.started = false;
     }
 
