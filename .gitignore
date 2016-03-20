@@ -2,3 +2,6 @@
 .idea
 target
 wildweb.jar
+ruby/lib/jar/*
+ruby/*.gem
+ruby/.ruby-version

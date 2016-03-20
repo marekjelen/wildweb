@@ -19,5 +19,6 @@ public interface HttpRequest {
     List<String> splat();
 
     String content();
+    byte[] contentBytes();
 
 }

@@ -1,0 +1,43 @@
+#!/usr/bin/env ruby
+require 'optparse'
+
+require 'rubygems'
+
+$: << File.expand_path('../../lib', __FILE__)
+require 'thick'
+
+options = {}
+
+OptionParser.new do |opts|
+
+  opts.banner = 'Usage: thick [options]'
+
+  opts.separator ''
+  opts.separator 'Ruby options:'
+
+  opts.separator ''
+  opts.separator 'Rack options:'
+
+  opts.on('-o', '--host HOST', 'listen on HOST (default: 0.0.0.0)') do |host|
+    options[:address] = host
+  end
+
+  opts.on('-p', '--port PORT', 'use PORT (default: 9292)') do |port|
+    options[:port] = Integer(port)
+  end
+
+  opts.on('-f', '--file FILE', 'use FILE to load the application (default: config.ru)') do |file|
+    options[:file] = file
+  end
+
+  opts.on('-d', '--directory DIR', 'use DIR as default directory (default: cwd)') do |directory|
+    options[:directory] = directory
+  end
+
+  opts.on('-E', '--env ENVIRONMENT', 'use ENVIRONMENT for defaults (default: development)') do |e|
+    options[:environment] = e
+  end
+
+end.parse!
+
+Thick::Server.create(options)

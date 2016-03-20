@@ -2,8 +2,10 @@ package cz.wildweb.server;
 
 import cz.wildweb.api.HttpRequest;
 import cz.wildweb.api.WebSocket;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.DefaultHttpRequest;
+import io.netty.util.CharsetUtil;
 
 import java.util.*;
 
@@ -11,7 +13,8 @@ public class HttpRequestImpl implements HttpRequest {
 
     private final DefaultHttpRequest request;
     private final ChannelHandlerContext context;
-    private final StringBuilder buffer = new StringBuilder();
+
+    private ByteBuf buffer;
 
     private Map<String, String> attributes = new HashMap<>();
     private List<String> splat;
@@ -67,11 +70,19 @@ public class HttpRequestImpl implements HttpRequest {
 
     @Override
     public String content() {
-        return this.buffer.toString();
+        return this.buffer.toString(CharsetUtil.UTF_8);
     }
 
-    public void content(String content) {
-        this.buffer.append(content);
+    @Override
+    public byte[] contentBytes() {
+        int len = this.buffer.readableBytes();
+        byte[] tmp = new byte[len];
+        this.buffer.getBytes(0, tmp);
+        return tmp;
+    }
+
+    public void content(ByteBuf content) {
+        this.buffer = content;
     }
 
     public void attribute(String name, String value) {

@@ -22,7 +22,6 @@ public class HttpResponseImpl implements HttpResponse {
 
     private final ChannelHandlerContext channelContext;
     private final DefaultHttpResponse response;
-    private final Configuration configuration;
     private final Map<String, Object> variables = new HashMap<>();
     private final HttpRequestImpl request;
     private boolean sent = false;
@@ -31,16 +30,6 @@ public class HttpResponseImpl implements HttpResponse {
         this.request = request;
         this.channelContext = channelContext;
         this.response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
-        this.configuration = new Configuration(Configuration.VERSION_2_3_21);
-
-        try {
-            this.configuration.setDirectoryForTemplateLoading(new File("templates"));
-            this.configuration.setDefaultEncoding("UTF-8");
-            this.configuration.setShowErrorTips(true);
-            this.configuration.setTemplateExceptionHandler(TemplateExceptionHandler.HTML_DEBUG_HANDLER);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     @Override
@@ -142,6 +131,20 @@ public class HttpResponseImpl implements HttpResponse {
         if(this.request.websocket().active()) return;
 
         LoggerFactory.getLogger(getClass()).debug("Rendering template as response");
+
+        Configuration configuration = new Configuration(Configuration.VERSION_2_3_23);
+
+        File templates = new File("templates");
+        if(templates.exists()) {
+            try {
+                configuration.setDirectoryForTemplateLoading(templates);
+                configuration.setDefaultEncoding("UTF-8");
+                configuration.setShowErrorTips(true);
+                configuration.setTemplateExceptionHandler(TemplateExceptionHandler.HTML_DEBUG_HANDLER);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
 
         try {
             Template template = configuration.getTemplate(file);

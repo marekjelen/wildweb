@@ -2,13 +2,13 @@ package cz.wildweb.server;
 
 import cz.wildweb.api.HttpHandler;
 import cz.wildweb.server.router.HttpRouter;
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.websocketx.*;
-import io.netty.util.CharsetUtil;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
@@ -21,6 +21,8 @@ public class HttpServerHandler extends SimpleChannelInboundHandler<Object> {
 
     private HttpRequestImpl request;
     private HttpResponseImpl response;
+
+    private ByteBuf buffer;
 
     public HttpServerHandler(HttpRouter router) {
         this.router = router;
@@ -61,21 +63,21 @@ public class HttpServerHandler extends SimpleChannelInboundHandler<Object> {
         if(msg instanceof DefaultHttpRequest) {
             this.request = new HttpRequestImpl((DefaultHttpRequest) msg, ctx);
             this.response = new HttpResponseImpl(ctx, this.request);
+            this.buffer = Unpooled.buffer();
             LoggerFactory.getLogger(getClass()).debug("{} {}", this.request.method(), this.request.uri());
         }
 
         if(msg instanceof HttpContent) {
-            this.request.content(((HttpContent) msg).content().toString(CharsetUtil.UTF_8));
+            this.buffer.writeBytes(((HttpContent) msg).content());
         }
 
         if(msg instanceof LastHttpContent) {
-            if(this.request.method().equals("GET")) {
-                File path = new File("public", this.request.uri());
-                if(path.exists() && path.isFile()) {
-                    LoggerFactory.getLogger(getClass()).debug("Serving static file: {}", path.getAbsolutePath());
-                    this.response.close(path);
-                    return;
-                }
+            this.request.content(this.buffer);
+            File path = new File("public", this.request.uri());
+            if(path.exists() && path.isFile()) {
+                LoggerFactory.getLogger(getClass()).debug("Serving static file: {}", path.getAbsolutePath());
+                this.response.close(path);
+                return;
             }
             route();
         }
