@@ -1,10 +1,10 @@
 # WildWeb
 
-Netty-based HTTP server framework.
+Netty-based HTTP server framework. Embeds Thick - a lightweight web server for JRuby.
 
 ## Example
 
-```
+```Java
 package cz.wildweb.example;
 
 import cz.wildweb.api.HttpServer;
@@ -53,6 +53,58 @@ public class Main {
 
 }
 
+```
+
+or
+
+```Java
+package cz.wildweb.example;
+
+import static cz.wildweb.api.Wildweb.*;
+
+public class Main {
+
+    public static void main(String[] args) {
+        get("/", (req, res) -> { res.close("Welcome"); });
+        startServer(8080);
+    }
+
+}
+
+```
+
+or
+
+```Java
+package cz.wildweb.example;
+
+import static cz.wildweb.api.Wildweb.*;
+
+public class Main {
+
+    public static void main(String[] args) {
+        request(new RootHandler());
+        startServer(8080);
+    }
+
+}
+```
+
+```Java
+package cz.wildweb.example;
+
+import cz.wildweb.api.HttpHandler;
+import cz.wildweb.api.HttpRequest;
+import cz.wildweb.api.HttpResponse;
+import cz.wildweb.api.annotations.Request;
+
+@Request(url = "/")
+public class RootHandler implements HttpHandler {
+    @Override
+    public void handle(HttpRequest request, HttpResponse response) throws Exception {
+        response.close("Welcome.");
+    }
+}
 ```
 
 ## Status
