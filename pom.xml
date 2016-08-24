@@ -139,4 +139,12 @@
         </profile>
     </profiles>
 
+    <distributionManagement>
+        <repository>
+            <id>bintray-wildweb-wildweb</id>
+            <name>wildweb-wildweb</name>
+            <url>https://api.bintray.com/maven/wildweb/wildweb/cz.wildweb:wildweb;publish=1</url>
+        </repository>
+    </distributionManagement>
+
 </project>
