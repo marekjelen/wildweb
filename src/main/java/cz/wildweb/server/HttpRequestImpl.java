@@ -1,28 +1,46 @@
 package cz.wildweb.server;
 
+import cz.wildweb.api.*;
 import cz.wildweb.api.HttpRequest;
-import cz.wildweb.api.WebSocket;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.DefaultHttpRequest;
+import io.netty.handler.codec.http.*;
+import io.netty.handler.codec.http.multipart.*;
 import io.netty.util.CharsetUtil;
 
+import java.io.IOException;
 import java.util.*;
 
 public class HttpRequestImpl implements HttpRequest {
 
     private final DefaultHttpRequest request;
     private final ChannelHandlerContext context;
+    private final HttpServer server;
 
-    private ByteBuf buffer;
+    private ByteBuf buffer = Unpooled.buffer();
 
     private Map<String, String> attributes = new HashMap<>();
+    private Map<String, HttpFile> files = new HashMap<>();
     private List<String> splat;
     private WebSocketImpl websocket;
+    private InterfaceHttpPostRequestDecoder decoder;
 
-    public HttpRequestImpl(DefaultHttpRequest request, ChannelHandlerContext ctx) {
+    public HttpRequestImpl(DefaultHttpRequest request, HttpServer server, ChannelHandlerContext ctx) {
+        this.server = server;
         this.context = ctx;
         this.request = request;
+        this.decoder = new HttpPostRequestDecoder(new DefaultHttpDataFactory(true), request);
+    }
+
+    @Override
+    public HttpServer server() {
+        return this.server;
+    }
+
+    @Override
+    public HttpContext context() {
+        return this.server.context();
     }
 
     @Override
@@ -64,6 +82,11 @@ public class HttpRequestImpl implements HttpRequest {
     }
 
     @Override
+    public HttpFile file(String name) {
+        return this.files.get(name);
+    }
+
+    @Override
     public List<String> splat() {
         return this.splat;
     }
@@ -74,6 +97,11 @@ public class HttpRequestImpl implements HttpRequest {
     }
 
     @Override
+    public String content(String name) {
+        return this.decoder.getBodyHttpData(name).toString();
+    }
+
+    @Override
     public byte[] contentBytes() {
         int len = this.buffer.readableBytes();
         byte[] tmp = new byte[len];
@@ -81,8 +109,33 @@ public class HttpRequestImpl implements HttpRequest {
         return tmp;
     }
 
-    public void content(ByteBuf content) {
-        this.buffer = content;
+    public void content(HttpContent content) {
+        if(this.decoder.isMultipart() && !(content instanceof LastHttpContent)) {
+            this.decoder.offer(content);
+            while (this.decoder.hasNext()) {
+                InterfaceHttpData part = this.decoder.next();
+                if (part instanceof Attribute) {
+                    try {
+                        this.attributes.put(part.getName(), ((Attribute) part).getValue());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if (part instanceof FileUpload) {
+                    this.files.put(part.getName(), new HttpFileImpl((FileUpload) part));
+                }
+            }
+        }
+        this.buffer = this.buffer.writeBytes(content.content());
+        if(content instanceof LastHttpContent
+                && request.headers().get(HttpHeaderNames.CONTENT_TYPE) != null
+                && request.headers().get(HttpHeaderNames.CONTENT_TYPE).equals("application/x-www-form-urlencoded")){
+            String b = this.buffer.toString(CharsetUtil.UTF_8);
+            QueryStringDecoder qs = new QueryStringDecoder(b, false);
+            qs.parameters().keySet().stream().forEach(name -> {
+                this.attribute(name, qs.parameters().get(name).get(0));
+            });
+        }
     }
 
     public void attribute(String name, String value) {
@@ -101,4 +154,11 @@ public class HttpRequestImpl implements HttpRequest {
         return websocket;
     }
 
+    public void close() {
+        try {
+            this.decoder.destroy();
+        } catch (IllegalStateException e) {
+
+        }
+    }
 }

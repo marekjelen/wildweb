@@ -1,5 +1,6 @@
 package cz.wildweb.server.router;
 
+import cz.wildweb.api.HttpFilter;
 import cz.wildweb.api.HttpHandler;
 import cz.wildweb.server.HttpRequestImpl;
 
@@ -26,6 +27,14 @@ public class HttpRouter {
         }
         request.splat(match.splat());
         return match.handler();
+    }
+
+    public void before(String method, String url, HttpFilter filter) {
+
+    }
+
+    public void after(String method, String url, HttpFilter filter) {
+
     }
 
 }

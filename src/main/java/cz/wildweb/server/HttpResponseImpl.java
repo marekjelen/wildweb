@@ -1,12 +1,9 @@
 package cz.wildweb.server;
 
 import cz.wildweb.api.HttpResponse;
-import freemarker.template.Configuration;
-import freemarker.template.Template;
-import freemarker.template.TemplateException;
-import freemarker.template.TemplateExceptionHandler;
+import cz.wildweb.server.templates.GenericTemplate;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.DefaultFileRegion;
 import io.netty.handler.codec.http.*;
@@ -67,8 +64,14 @@ public class HttpResponseImpl implements HttpResponse {
         if(this.request.websocket().active()) return;
 
         LoggerFactory.getLogger(getClass()).debug("Closing response");
+
         this.send();
-        this.channelContext.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT).addListener(ChannelFutureListener.CLOSE);
+
+        this.channelContext.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT).addListener((future) -> {
+            ChannelFuture f = (ChannelFuture) future;
+            f.channel().close();
+            this.request.close();
+        });
     }
 
     @Override
@@ -106,7 +109,7 @@ public class HttpResponseImpl implements HttpResponse {
 
         this.channelContext.writeAndFlush(new DefaultFileRegion(channel, 0, length));
 
-        this.channelContext.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT).addListener(ChannelFutureListener.CLOSE);
+        this.close();
     }
 
     @Override
@@ -127,33 +130,24 @@ public class HttpResponseImpl implements HttpResponse {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void render(String file) {
         if(this.request.websocket().active()) return;
 
         LoggerFactory.getLogger(getClass()).debug("Rendering template as response");
 
-        Configuration configuration = new Configuration(Configuration.VERSION_2_3_23);
-
-        File templates = new File("templates");
-        if(templates.exists()) {
-            try {
-                configuration.setDirectoryForTemplateLoading(templates);
-                configuration.setDefaultEncoding("UTF-8");
-                configuration.setShowErrorTips(true);
-                configuration.setTemplateExceptionHandler(TemplateExceptionHandler.HTML_DEBUG_HANDLER);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
+        int last = file.lastIndexOf(".");
+        String ext = file.substring(last + 1);
         try {
-            Template template = configuration.getTemplate(file);
-            StringWriter result = new StringWriter();
-            template.process(this.variables, result);
-            close(result.toString());
-        } catch (IOException | TemplateException e) {
+            Class<GenericTemplate> clazz = (Class<GenericTemplate>) Class.forName("cz.wildweb.server.templates." + ext);
+            GenericTemplate template = clazz.newInstance();
+            this.close(template.render(this.variables, file));
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
             e.printStackTrace();
+            status(500);
+            close();
         }
+
     }
 
     private String stringize(Object content) {

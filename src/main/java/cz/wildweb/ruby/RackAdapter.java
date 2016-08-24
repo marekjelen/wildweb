@@ -63,10 +63,11 @@ public class RackAdapter implements HttpHandler {
         hash.put("rack.multithread", true);
         hash.put("rack.multiprocess", false);
         hash.put("rack.run_once", false);
-        hash.put("rack.hijack?", false);
+        hash.put("rack.hijack?", true);
         hash.put("rack.hijack", null);
         hash.put("rack.hijack_io", null);
 
+        hash.put("wildweb.request", request);
         hash.put("wildweb.response", response);
 
         IRubyObject env = JavaUtil.convertJavaToRuby(this.runtime, hash);

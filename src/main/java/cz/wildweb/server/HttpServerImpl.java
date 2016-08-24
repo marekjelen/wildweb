@@ -1,7 +1,10 @@
 package cz.wildweb.server;
 
+import cz.wildweb.api.HttpContext;
+import cz.wildweb.api.HttpFilter;
 import cz.wildweb.api.HttpHandler;
 import cz.wildweb.api.HttpServer;
+import cz.wildweb.api.annotations.Request;
 import cz.wildweb.server.router.HttpRouter;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
@@ -16,17 +19,24 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
+
 public class HttpServerImpl implements HttpServer {
 
     private final NioEventLoopGroup bossGroup;
     private final NioEventLoopGroup workerGroup;
     private final ServerBootstrap bootstrap;
     private final HttpRouter router = new HttpRouter();
+    private final HttpContext context;
     private boolean started = false;
     private Channel channel;
 
     public HttpServerImpl() {
         LoggerFactory.getLogger(getClass()).info("Setting up HTTP server");
+
+        HttpServer self = this;
+
+        this.context = new HttpContext();
 
         this.bossGroup = new NioEventLoopGroup(1);
         this.workerGroup = new NioEventLoopGroup();
@@ -38,12 +48,17 @@ public class HttpServerImpl implements HttpServer {
             @Override
             protected void initChannel(SocketChannel ch) throws Exception {
                 ChannelPipeline p = ch.pipeline();
-                p.addLast(new LoggingHandler(LogLevel.INFO));
+                p.addLast(new LoggingHandler(LogLevel.DEBUG));
                 p.addLast(new HttpRequestDecoder());
                 p.addLast(new HttpResponseEncoder());
-                p.addLast(new HttpServerHandler(router));
+                p.addLast(new HttpServerHandler(self, router));
             }
         });
+    }
+
+    @Override
+    public HttpContext context() {
+        return this.context;
     }
 
     @Override
@@ -58,6 +73,12 @@ public class HttpServerImpl implements HttpServer {
             LoggerFactory.getLogger(getClass()).error("Problem starting HTTP server", e);
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public void register(HttpHandler handler) {
+        Request request = handler.getClass().getAnnotation(Request.class);
+        register(request.method(), request.url(), handler);
     }
 
     @Override
@@ -82,6 +103,16 @@ public class HttpServerImpl implements HttpServer {
             e.printStackTrace();
         }
         this.started = false;
+    }
+
+    @Override
+    public void before(String method, String url, HttpFilter filter) {
+        this.router.before(method, url, filter);
+    }
+
+    @Override
+    public void after(String method, String url, HttpFilter filter) {
+        this.router.after(method, url, filter);
     }
 
 }
