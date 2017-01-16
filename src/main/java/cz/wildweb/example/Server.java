@@ -2,12 +2,12 @@ package cz.wildweb.example;
 
 import cz.wildweb.api.HttpServer;
 import cz.wildweb.api.WebSocket;
-import cz.wildweb.server.HttpServerImpl;
+import cz.wildweb.server.netty.NettyServer;
 
 public class Server {
 
     public static void main(String[] args) {
-        HttpServer server = new HttpServerImpl();
+        HttpServer server = new NettyServer();
         server.start("localhost", 8081);
 
         server.register("/", (request, response) -> {

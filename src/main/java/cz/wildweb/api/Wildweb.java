@@ -1,13 +1,13 @@
 package cz.wildweb.api;
 
-import cz.wildweb.server.HttpServerImpl;
+import cz.wildweb.server.netty.NettyServer;
 
 public class Wildweb {
 
     protected Wildweb() {
     }
 
-    private static HttpServer server = new HttpServerImpl();
+    private static HttpServer server = new NettyServer();
 
     public static HttpServer getServer() {
         return server;

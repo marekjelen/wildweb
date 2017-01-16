@@ -2,7 +2,7 @@ package cz.wildweb.server.router;
 
 import cz.wildweb.api.HttpFilter;
 import cz.wildweb.api.HttpHandler;
-import cz.wildweb.server.HttpRequestImpl;
+import cz.wildweb.api.HttpRequestInternal;
 
 import java.util.*;
 
@@ -19,7 +19,7 @@ public class HttpRouter {
         node.handler(method, handler);
     }
 
-    public HttpHandler match(HttpRequestImpl request) {
+    public HttpHandler match(HttpRequestInternal request) {
         HttpUrlHolder match = this.root.match(new HttpUrlHolder(request.uri()), request);
         if(match == null) return null;
         for(int i = 0; i < match.variables().length; i++) {

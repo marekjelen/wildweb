@@ -1,4 +1,4 @@
-package cz.wildweb.server;
+package cz.wildweb.server.netty;
 
 import cz.wildweb.api.HttpFile;
 import io.netty.handler.codec.http.multipart.FileUpload;
@@ -6,11 +6,11 @@ import io.netty.handler.codec.http.multipart.FileUpload;
 import java.io.File;
 import java.io.IOException;
 
-public class HttpFileImpl implements HttpFile {
+public class NettyFile implements HttpFile {
 
     private final FileUpload upload;
 
-    public HttpFileImpl(FileUpload upload) {
+    public NettyFile(FileUpload upload) {
         this.upload = upload;
     }
 

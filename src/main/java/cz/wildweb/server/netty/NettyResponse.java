@@ -1,7 +1,7 @@
-package cz.wildweb.server;
+package cz.wildweb.server.netty;
 
+import cz.wildweb.api.HttpRequest;
 import cz.wildweb.api.HttpResponse;
-import cz.wildweb.server.templates.GenericTemplate;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
@@ -15,18 +15,28 @@ import java.nio.channels.FileChannel;
 import java.util.HashMap;
 import java.util.Map;
 
-public class HttpResponseImpl implements HttpResponse {
+public class NettyResponse implements HttpResponse {
 
     private final ChannelHandlerContext channelContext;
     private final DefaultHttpResponse response;
     private final Map<String, Object> variables = new HashMap<>();
-    private final HttpRequestImpl request;
+    private final NettyRequest request;
     private boolean sent = false;
 
-    public HttpResponseImpl(ChannelHandlerContext channelContext, HttpRequestImpl request) {
+    public NettyResponse(ChannelHandlerContext channelContext, NettyRequest request) {
         this.request = request;
         this.channelContext = channelContext;
         this.response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+    }
+
+    @Override
+    public HttpRequest request() {
+        return this.request;
+    }
+
+    @Override
+    public Map<String, Object> variables() {
+        return this.variables;
     }
 
     @Override
@@ -40,7 +50,7 @@ public class HttpResponseImpl implements HttpResponse {
     }
 
     @Override
-    public void send() {
+    public void commit() {
         if(this.request.websocket().active()) return;
         if(this.sent) return;
 
@@ -50,13 +60,25 @@ public class HttpResponseImpl implements HttpResponse {
     }
 
     @Override
+    public boolean committed() {
+        return this.sent;
+    }
+
+    @Override
     public void write(Object content) {
         if(this.request.websocket().active()) return;
 
-        this.send();
+        this.commit();
         String data = stringize(content);
         LoggerFactory.getLogger(getClass()).debug("Sending response body {}", data);
         this.channelContext.write(new DefaultHttpContent(Unpooled.wrappedBuffer(data.getBytes())));
+    }
+
+    @Override
+    public void write(byte[] buffer, int i, int len) {
+        if(this.request.websocket().active()) return;
+        this.commit();
+        this.channelContext.write(new DefaultHttpContent(Unpooled.wrappedBuffer(buffer, i, len)));
     }
 
     @Override
@@ -65,7 +87,7 @@ public class HttpResponseImpl implements HttpResponse {
 
         LoggerFactory.getLogger(getClass()).debug("Closing response");
 
-        this.send();
+        this.commit();
 
         this.channelContext.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT).addListener((future) -> {
             ChannelFuture f = (ChannelFuture) future;
@@ -105,59 +127,11 @@ public class HttpResponseImpl implements HttpResponse {
         MimetypesFileTypeMap mimeTypesMap = new MimetypesFileTypeMap();
         header("Content-Type", mimeTypesMap.getContentType(file));
 
-        send();
+        commit();
 
         this.channelContext.writeAndFlush(new DefaultFileRegion(channel, 0, length));
 
         this.close();
     }
-
-    @Override
-    public void close(Object content) {
-        if(this.request.websocket().active()) return;
-
-        String data = stringize(content);
-        if(!this.sent) {
-            this.header(HttpHeaders.Names.CONTENT_LENGTH, String.valueOf(data.length()));
-        }
-        this.write(data);
-        this.close();
-    }
-
-    @Override
-    public void put(String name, Object value) {
-        this.variables.put(name, value);
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public void render(String file) {
-        if(this.request.websocket().active()) return;
-
-        LoggerFactory.getLogger(getClass()).debug("Rendering template as response");
-
-        int last = file.lastIndexOf(".");
-        String ext = file.substring(last + 1);
-        try {
-            Class<GenericTemplate> clazz = (Class<GenericTemplate>) Class.forName("cz.wildweb.server.templates." + ext);
-            GenericTemplate template = clazz.newInstance();
-            this.close(template.render(this.variables, file));
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
-            e.printStackTrace();
-            status(500);
-            close();
-        }
-
-    }
-
-    private String stringize(Object content) {
-        if(content == null) return "";
-        if(content instanceof String) {
-            return (String) content;
-        } else {
-            return content.toString();
-        }
-    }
-
 
 }

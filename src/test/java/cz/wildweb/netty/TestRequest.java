@@ -1,4 +1,4 @@
-package cz.wildweb;
+package cz.wildweb.netty;
 
 import org.junit.Assert;
 import org.junit.Test;

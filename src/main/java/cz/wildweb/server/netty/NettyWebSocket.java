@@ -1,4 +1,4 @@
-package cz.wildweb.server;
+package cz.wildweb.server.netty;
 
 import cz.wildweb.api.WebSocket;
 import io.netty.buffer.Unpooled;
@@ -8,10 +8,10 @@ import org.slf4j.LoggerFactory;
 
 import java.util.function.Consumer;
 
-public class WebSocketImpl implements WebSocket {
+public class NettyWebSocket implements WebSocket {
 
     private final ChannelHandlerContext context;
-    private final HttpRequestImpl request;
+    private final NettyRequest request;
 
     private WebSocketServerHandshaker handshaker;
     private Consumer<String> onMessage;
@@ -19,7 +19,7 @@ public class WebSocketImpl implements WebSocket {
     private boolean active;
     private Runnable opened;
 
-    public WebSocketImpl(ChannelHandlerContext context, HttpRequestImpl request) {
+    public NettyWebSocket(ChannelHandlerContext context, NettyRequest request) {
         this.context = context;
         this.request = request;
     }

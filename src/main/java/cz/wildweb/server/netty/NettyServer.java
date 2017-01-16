@@ -1,10 +1,7 @@
-package cz.wildweb.server;
+package cz.wildweb.server.netty;
 
 import cz.wildweb.api.HttpContext;
-import cz.wildweb.api.HttpFilter;
-import cz.wildweb.api.HttpHandler;
 import cz.wildweb.api.HttpServer;
-import cz.wildweb.api.annotations.Request;
 import cz.wildweb.server.router.HttpRouter;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
@@ -19,9 +16,7 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-
-public class HttpServerImpl implements HttpServer {
+public class NettyServer implements HttpServer {
 
     private final NioEventLoopGroup bossGroup;
     private final NioEventLoopGroup workerGroup;
@@ -31,7 +26,7 @@ public class HttpServerImpl implements HttpServer {
     private boolean started = false;
     private Channel channel;
 
-    public HttpServerImpl() {
+    public NettyServer() {
         LoggerFactory.getLogger(getClass()).info("Setting up HTTP server");
 
         HttpServer self = this;
@@ -51,7 +46,7 @@ public class HttpServerImpl implements HttpServer {
                 p.addLast(new LoggingHandler(LogLevel.DEBUG));
                 p.addLast(new HttpRequestDecoder());
                 p.addLast(new HttpResponseEncoder());
-                p.addLast(new HttpServerHandler(self, router));
+                p.addLast(new NettyServerHandler(self, router));
             }
         });
     }
@@ -59,6 +54,11 @@ public class HttpServerImpl implements HttpServer {
     @Override
     public HttpContext context() {
         return this.context;
+    }
+
+    @Override
+    public HttpRouter router() {
+        return this.router;
     }
 
     @Override
@@ -76,22 +76,6 @@ public class HttpServerImpl implements HttpServer {
     }
 
     @Override
-    public void register(HttpHandler handler) {
-        Request request = handler.getClass().getAnnotation(Request.class);
-        register(request.method(), request.url(), handler);
-    }
-
-    @Override
-    public void register(String url, HttpHandler handler) {
-        this.register("*", url, handler);
-    }
-
-    @Override
-    public void register(String method, String url, HttpHandler handler) {
-        this.router.register(method, url, handler);
-    }
-
-    @Override
     public void stop() {
         if(!this.started) return;
         LoggerFactory.getLogger(getClass()).info("Stopping HTTP server");
@@ -103,16 +87,6 @@ public class HttpServerImpl implements HttpServer {
             e.printStackTrace();
         }
         this.started = false;
-    }
-
-    @Override
-    public void before(String method, String url, HttpFilter filter) {
-        this.router.before(method, url, filter);
-    }
-
-    @Override
-    public void after(String method, String url, HttpFilter filter) {
-        this.router.after(method, url, filter);
     }
 
 }

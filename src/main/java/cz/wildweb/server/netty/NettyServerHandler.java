@@ -1,9 +1,8 @@
-package cz.wildweb.server;
+package cz.wildweb.server.netty;
 
 import cz.wildweb.api.HttpHandler;
 import cz.wildweb.api.HttpServer;
 import cz.wildweb.server.router.HttpRouter;
-import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -14,17 +13,17 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 
-public class HttpServerHandler extends SimpleChannelInboundHandler<Object> {
+public class NettyServerHandler extends SimpleChannelInboundHandler<Object> {
 
     private final HttpRouter router;
     private final HttpServer server;
 
     private ChannelHandlerContext context;
 
-    private HttpRequestImpl request;
-    private HttpResponseImpl response;
+    private NettyRequest request;
+    private NettyResponse response;
 
-    public HttpServerHandler(HttpServer server, HttpRouter router) {
+    public NettyServerHandler(HttpServer server, HttpRouter router) {
         this.server = server;
         this.router = router;
     }
@@ -62,8 +61,8 @@ public class HttpServerHandler extends SimpleChannelInboundHandler<Object> {
         }
 
         if(msg instanceof DefaultHttpRequest) {
-            this.request = new HttpRequestImpl((DefaultHttpRequest) msg, this.server, ctx);
-            this.response = new HttpResponseImpl(ctx, this.request);
+            this.request = new NettyRequest((DefaultHttpRequest) msg, this.server, ctx);
+            this.response = new NettyResponse(ctx, this.request);
             LoggerFactory.getLogger(getClass()).debug("{} {}", this.request.method(), this.request.uri());
         }
 

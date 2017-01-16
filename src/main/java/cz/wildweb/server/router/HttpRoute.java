@@ -1,7 +1,7 @@
 package cz.wildweb.server.router;
 
 import cz.wildweb.api.HttpHandler;
-import cz.wildweb.server.HttpRequestImpl;
+import cz.wildweb.api.HttpRequest;
 
 import java.util.*;
 
@@ -38,7 +38,7 @@ public class HttpRoute {
         return target.get(name);
     }
 
-    public HttpUrlHolder match(HttpUrlHolder url, HttpRequestImpl request) {
+    public HttpUrlHolder match(HttpUrlHolder url, HttpRequest request) {
         // Unless we can get deeper, look for handler
         if(url.finished()) {
             HttpHandler result = handler(request.method());

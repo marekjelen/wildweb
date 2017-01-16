@@ -1,7 +1,7 @@
-package cz.wildweb;
+package cz.wildweb.netty;
 
 import cz.wildweb.api.HttpServer;
-import cz.wildweb.server.HttpServerImpl;
+import cz.wildweb.server.netty.NettyServer;
 import org.junit.After;
 import org.junit.Before;
 
@@ -12,7 +12,7 @@ public class BaseTest {
 
     @Before
     public void before() {
-        this.server = new HttpServerImpl();
+        this.server = new NettyServer();
     }
 
     @After

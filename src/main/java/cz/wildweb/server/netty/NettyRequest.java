@@ -1,7 +1,6 @@
-package cz.wildweb.server;
+package cz.wildweb.server.netty;
 
 import cz.wildweb.api.*;
-import cz.wildweb.api.HttpRequest;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
@@ -12,7 +11,7 @@ import io.netty.util.CharsetUtil;
 import java.io.IOException;
 import java.util.*;
 
-public class HttpRequestImpl implements HttpRequest {
+public class NettyRequest implements HttpRequestInternal {
 
     private final DefaultHttpRequest request;
     private final ChannelHandlerContext context;
@@ -23,10 +22,10 @@ public class HttpRequestImpl implements HttpRequest {
     private Map<String, String> attributes = new HashMap<>();
     private Map<String, HttpFile> files = new HashMap<>();
     private List<String> splat;
-    private WebSocketImpl websocket;
+    private NettyWebSocket websocket;
     private InterfaceHttpPostRequestDecoder decoder;
 
-    public HttpRequestImpl(DefaultHttpRequest request, HttpServer server, ChannelHandlerContext ctx) {
+    public NettyRequest(DefaultHttpRequest request, HttpServer server, ChannelHandlerContext ctx) {
         this.server = server;
         this.context = ctx;
         this.request = request;
@@ -56,7 +55,7 @@ public class HttpRequestImpl implements HttpRequest {
     @Override
     public WebSocket websocket() {
         if(this.websocket == null) {
-            this.websocket = new WebSocketImpl(this.context, this);
+            this.websocket = new NettyWebSocket(this.context, this);
         }
         return this.websocket;
     }
@@ -122,7 +121,7 @@ public class HttpRequestImpl implements HttpRequest {
                     }
                 }
                 if (part instanceof FileUpload) {
-                    this.files.put(part.getName(), new HttpFileImpl((FileUpload) part));
+                    this.files.put(part.getName(), new NettyFile((FileUpload) part));
                 }
             }
         }
@@ -138,10 +137,12 @@ public class HttpRequestImpl implements HttpRequest {
         }
     }
 
+    @Override
     public void attribute(String name, String value) {
         this.attributes.put(name, value);
     }
 
+    @Override
     public void splat(String[] splat) {
         this.splat = Arrays.asList(splat);
     }
@@ -150,7 +151,7 @@ public class HttpRequestImpl implements HttpRequest {
         return request;
     }
 
-    public WebSocketImpl websocketHandler() {
+    public NettyWebSocket websocketHandler() {
         return websocket;
     }
 
